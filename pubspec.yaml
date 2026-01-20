@@ -1,0 +1,34 @@
+name: punch_card_record
+description: A new Flutter project for tracking daily punches.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Calendar widget
+  table_calendar: ^3.0.9
+  # Date formatting
+  intl: ^0.18.1
+  # State management
+  provider: ^6.0.5
+  # Local storage for settings
+  shared_preferences: ^2.2.0
+  # File system access for logs
+  path_provider: ^2.1.1
+  # JSON support
+  json_annotation: ^4.8.1
+  # UUID generation
+  uuid: ^4.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true

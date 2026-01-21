@@ -42,6 +42,11 @@ class _HomePageState extends State<HomePage> {
             ),
             actions: [
               IconButton(
+                icon: const Icon(Icons.calendar_today_outlined),
+                tooltip: '选择年份',
+                onPressed: () => _showYearPicker(context),
+              ),
+              IconButton(
                 icon: const Icon(Icons.history),
                 onPressed: () {
                   Navigator.push(
@@ -59,6 +64,10 @@ class _HomePageState extends State<HomePage> {
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay,
                 calendarFormat: _calendarFormat,
+                availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+                onFormatChanged: (format) {
+                  // Do nothing to prevent format change
+                },
                 selectedDayPredicate: (day) {
                   return isSameDay(_selectedDay, day);
                 },
@@ -77,7 +86,16 @@ class _HomePageState extends State<HomePage> {
                   _showPunchDialog(context, provider, selectedDay);
                 },
                 onPageChanged: (focusedDay) {
-                  _focusedDay = focusedDay;
+                  setState(() {
+                    _focusedDay = focusedDay;
+                  });
+                },
+                onFormatChanged: (format) {
+                  if (_calendarFormat != format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  }
                 },
                 calendarBuilders: CalendarBuilders(
                   defaultBuilder: (context, day, focusedDay) {
@@ -259,4 +277,30 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+  
+    void _showYearPicker(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("选择年份"),
+            content: SizedBox(
+              width: 300,
+              height: 300,
+              child: YearPicker(
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                selectedDate: _focusedDay,
+                onChanged: (DateTime dateTime) {
+                  setState(() {
+                    _focusedDay = dateTime;
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+          );
+        },
+      );
+    }
 }

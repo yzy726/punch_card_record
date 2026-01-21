@@ -64,10 +64,6 @@ class _HomePageState extends State<HomePage> {
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay,
                 calendarFormat: _calendarFormat,
-                availableCalendarFormats: const {CalendarFormat.month: 'Month'},
-                onFormatChanged: (format) {
-                  // Do nothing to prevent format change
-                },
                 selectedDayPredicate: (day) {
                   return isSameDay(_selectedDay, day);
                 },

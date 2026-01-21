@@ -20,9 +20,20 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: '3.16.0'
+
+      - name: Setup Flutter
+        run: |
+          flutter doctor
+          flutter --version
 
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Create Android local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          echo "flutter.sdk=$FLUTTER_HOME" >> android/local.properties
 
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons

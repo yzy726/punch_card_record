@@ -5,7 +5,7 @@
 1. 打开 [Build Android APK](https://github.com/yzy726/punch_card_record/actions/workflows/build_apk.yml)。
 2. 主分支推送会自动构建，也可点击 **Run workflow** 手动构建。
 3. 等待运行变绿，打开底部 **Artifacts → punch-card-record-apk**，下载并解压。
-4. 安装 `punch-card-record-1.1.0.apk`；`SHA256SUMS.txt` 可校验文件完整性。
+4. 安装解压后的 APK；文件名会随应用版本更新，`SHA256SUMS.txt` 可校验文件完整性。
 
 `validation-*` 包含锁定依赖、测试覆盖率和 `home.png`、`backup.png`、`logs.png` 界面预览。
 

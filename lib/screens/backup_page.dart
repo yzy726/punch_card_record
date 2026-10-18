@@ -58,7 +58,7 @@ class _BackupPageState extends State<BackupPage> {
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('覆盖当前数据？'),
-            content: const Text('当前打卡、设置和日志将替换为备份中的内容。建议先导出当前数据。'),
+            content: const Text('本机所有打卡项目、设置和日志将替换为备份中的内容。建议先导出当前数据。'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
@@ -124,7 +124,7 @@ class _BackupPageState extends State<BackupPage> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '本机共 ${provider.records.length} 个打卡日 · ${provider.logs.length} 条日志',
+                          '本机共 ${provider.habits.length} 个打卡项目 · ${provider.habits.fold<int>(0, (sum, habit) => sum + habit.data.records.length)} 条日记录',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.muted,
@@ -172,7 +172,7 @@ class _BackupPageState extends State<BackupPage> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '合并会保留两边的打卡日期，同一天取较大的次数，日志按编号去重，并保留本机设置。适合在设备间反复传递备份。',
+                  '备份包含全部项目。同一项目按日期取较大次数，保留本机设置和日志。改名后的项目仍会匹配；不同设备独立创建的同名项目会分别保留。',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.muted,
@@ -181,7 +181,7 @@ class _BackupPageState extends State<BackupPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  '若需要同步减少次数、删除记录或设置变更，请用最新备份覆盖。此功能通过文件手动同步，不会自动上传数据。',
+                  '若需要同步减少次数、删除项目或设置变更，请用最新备份覆盖。此功能通过文件手动同步，不会自动上传数据。',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.muted,
@@ -221,10 +221,9 @@ class _ImportPreviewState extends State<_ImportPreview> {
   @override
   Widget build(BuildContext context) {
     final backup = widget.backup;
-    final count = backup.data.records.fold<int>(
-      0,
-      (sum, record) => sum + record.count,
-    );
+    final count = backup.workspace.habits
+        .expand((habit) => habit.data.records)
+        .fold<int>(0, (sum, record) => sum + record.count);
     return AlertDialog(
       title: const Text('预览导入数据'),
       content: SingleChildScrollView(
@@ -233,13 +232,22 @@ class _ImportPreviewState extends State<_ImportPreview> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              backup.data.punchName,
+              '${backup.workspace.habits.length} 个打卡项目',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              '${backup.data.records.length} 个打卡日 · $count 次打卡\n${backup.data.logs.length} 条日志（含隐藏日志）',
+              '$count 次打卡 · ${backup.workspace.habits.fold<int>(0, (sum, habit) => sum + habit.data.logs.length)} 条日志（含隐藏日志）',
               style: const TextStyle(height: 1.7),
+            ),
+            ...backup.workspace.habits.map(
+              (habit) => Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '${habit.data.punchName} · 间隔 ${habit.data.idealIntervalDays} 天',
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Text(

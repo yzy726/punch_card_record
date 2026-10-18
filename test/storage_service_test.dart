@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:punch_card_record/models/punch_data.dart';
 import 'package:punch_card_record/models/punch_record.dart';
+import 'package:punch_card_record/models/punch_workspace.dart';
 import 'package:punch_card_record/services/storage_service.dart';
 
 void main() {
@@ -20,8 +21,10 @@ void main() {
 
   tearDown(() async => directory.delete(recursive: true));
 
-  PunchData snapshot(int count) => PunchData(
-    records: [PunchRecord(date: DateTime(2026, 10, 18), count: count)],
+  PunchWorkspace snapshot(int count) => PunchWorkspace.single(
+    PunchData(
+      records: [PunchRecord(date: DateTime(2026, 10, 18), count: count)],
+    ),
   );
 
   test(
@@ -38,16 +41,17 @@ void main() {
           {'date': '2026-10-18T08:00:00.000', 'count': 1},
         ]),
       );
-      final data = await storage.load();
+      final loaded = await storage.load();
+      final data = loaded.active.data;
       expect(data.punchName, '阅读');
       expect(data.idealIntervalDays, 1);
       expect(data.records.single.count, 3);
-      await storage.save(data);
+      await storage.save(loaded);
       expect(await original.exists(), isTrue);
       expect(
         (await StorageService(
           directory: directory,
-        ).load()).records.single.count,
+        ).load()).active.data.records.single.count,
         3,
       );
     },
@@ -57,7 +61,7 @@ void main() {
     await storage.load();
     await storage.save(snapshot(1));
     await storage.save(snapshot(2));
-    expect((await storage.load()).records.single.count, 2);
+    expect((await storage.load()).active.data.records.single.count, 2);
     final backup =
         jsonDecode(
               await File(
@@ -65,7 +69,7 @@ void main() {
               ).readAsString(),
             )
             as Map<String, dynamic>;
-    expect(PunchData.fromJson(backup).records.single.count, 1);
+    expect(PunchWorkspace.fromJson(backup).active.data.records.single.count, 1);
   });
 
   test(
@@ -76,7 +80,7 @@ void main() {
       await storage.save(snapshot(2));
       await File('${directory.path}/punch_data.json').writeAsString('{broken');
       final recovered = StorageService(directory: directory);
-      expect((await recovered.load()).records.single.count, 1);
+      expect((await recovered.load()).active.data.records.single.count, 1);
       expect(recovered.recoveryMessage, isNotNull);
       await recovered.save(snapshot(3));
       final backup =
@@ -86,11 +90,14 @@ void main() {
                 ).readAsString(),
               )
               as Map<String, dynamic>;
-      expect(PunchData.fromJson(backup).records.single.count, 1);
+      expect(
+        PunchWorkspace.fromJson(backup).active.data.records.single.count,
+        1,
+      );
       expect(
         (await StorageService(
           directory: directory,
-        ).load()).records.single.count,
+        ).load()).active.data.records.single.count,
         3,
       );
     },

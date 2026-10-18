@@ -77,11 +77,13 @@ jobs:
       - name: Prepare APK and checksum
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/punch-card-record-1.1.0.apk
+          APP_VERSION=$(awk '/^version:/ {print $2}' pubspec.yaml | cut -d+ -f1)
+          APK_NAME="punch-card-record-$APP_VERSION.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/$APK_NAME"
           APK_SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
-          "$APK_SIGNER" verify --verbose --print-certs dist/punch-card-record-1.1.0.apk > dist/signature.txt
+          "$APK_SIGNER" verify --verbose --print-certs "dist/$APK_NAME" > dist/signature.txt
           cd dist
-          sha256sum punch-card-record-1.1.0.apk > SHA256SUMS.txt
+          sha256sum "$APK_NAME" > SHA256SUMS.txt
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:

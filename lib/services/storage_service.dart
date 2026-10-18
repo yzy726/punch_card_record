@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/punch_data.dart';
 import '../models/punch_log.dart';
 import '../models/punch_record.dart';
+import '../models/punch_workspace.dart';
 
 class StorageService {
   StorageService({Directory? directory}) : _directory = directory;
@@ -18,7 +19,7 @@ class StorageService {
   Future<Directory> get _localDirectory async =>
       _directory ?? await getApplicationDocumentsDirectory();
 
-  Future<PunchData> load() async {
+  Future<PunchWorkspace> load() async {
     recoveryMessage = null;
     final directory = await _localDirectory;
     final primary = File('${directory.path}/punch_data.json');
@@ -54,15 +55,17 @@ class StorageService {
     final preferences = await SharedPreferences.getInstance();
     final name = preferences.getString('punchName')?.trim() ?? '';
     final interval = preferences.getInt('idealIntervalDays') ?? 1;
-    return PunchData(
-      records: records,
-      logs: logs,
-      punchName: name.isEmpty ? '每日打卡' : name,
-      idealIntervalDays: interval.clamp(1, 365).toInt(),
+    return PunchWorkspace.single(
+      PunchData(
+        records: records,
+        logs: logs,
+        punchName: name.isEmpty ? '每日打卡' : name,
+        idealIntervalDays: interval.clamp(1, 365).toInt(),
+      ),
     );
   }
 
-  Future<void> save(PunchData data) async {
+  Future<void> save(PunchWorkspace data) async {
     final directory = await _localDirectory;
     await directory.create(recursive: true);
     final primary = File('${directory.path}/punch_data.json');
@@ -80,9 +83,10 @@ class StorageService {
     _primaryHealthy = true;
   }
 
-  Future<PunchData> _readSnapshot(File file) async => PunchData.fromJson(
-    jsonDecode(await file.readAsString()) as Map<String, dynamic>,
-  );
+  Future<PunchWorkspace> _readSnapshot(File file) async =>
+      PunchWorkspace.fromJson(
+        jsonDecode(await file.readAsString()) as Map<String, dynamic>,
+      );
 
   Future<List<T>> _readLegacy<T>(
     File file,

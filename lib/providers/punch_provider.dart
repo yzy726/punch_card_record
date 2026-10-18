@@ -1,144 +1,244 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import '../models/punch_record.dart';
+
+import '../models/punch_backup.dart';
+import '../models/punch_data.dart';
 import '../models/punch_log.dart';
+import '../models/punch_record.dart';
 import '../services/storage_service.dart';
+import '../utils/calendar_date.dart';
 
 class PunchProvider with ChangeNotifier {
-  final StorageService _storageService = StorageService();
-  final Uuid _uuid = const Uuid();
-
-  List<PunchRecord> _records = [];
-  List<PunchLog> _logs = [];
-  
-  String _punchName = "每日打卡";
-  int _idealIntervalDays = 1;
-
-  List<PunchRecord> get records => _records;
-  List<PunchLog> get logs => _logs;
-  String get punchName => _punchName;
-  int get idealIntervalDays => _idealIntervalDays;
-
-  bool _isLoading = true;
-  bool get isLoading => _isLoading;
-
-  PunchProvider() {
-    _loadData();
+  PunchProvider({StorageService? storageService, DateTime Function()? clock})
+      : _storage = storageService ?? StorageService(),
+        _clock = clock ?? DateTime.now {
+    ready = _loadData();
   }
+
+  final StorageService _storage;
+  final DateTime Function() _clock;
+  final Uuid _uuid = const Uuid();
+  PunchData _data = PunchData();
+  Future<void> _writeQueue = Future<void>.value();
+  late Future<void> ready;
+  bool _isLoading = true;
+  bool _isSaving = false;
+  bool _disposed = false;
+  String? _loadError;
+
+  List<PunchRecord> get records => _data.records;
+  List<PunchLog> get logs => _data.logs;
+  String get punchName => _data.punchName;
+  int get idealIntervalDays => _data.idealIntervalDays;
+  bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving;
+  String? get loadError => _loadError;
+  String? get recoveryMessage => _storage.recoveryMessage;
+  DateTime get today => calendarDate(_clock());
 
   Future<void> _loadData() async {
     _isLoading = true;
-    notifyListeners();
-
-    // Load Settings
-    final prefs = await SharedPreferences.getInstance();
-    _punchName = prefs.getString('punchName') ?? "每日打卡";
-    _idealIntervalDays = prefs.getInt('idealIntervalDays') ?? 1;
-
-    // Load Data
-    _records = await _storageService.loadRecords();
-    _logs = await _storageService.loadLogs();
-
-    _isLoading = false;
-    notifyListeners();
+    _loadError = null;
+    _notify();
+    try {
+      _data = await _storage.load();
+    } on Object {
+      _loadError = '暂时无法读取本地数据。请重试，已有文件会保留。';
+    } finally {
+      _isLoading = false;
+      _notify();
+    }
   }
 
-  // --- Settings ---
-
-  Future<void> updateSettings(String name, int interval) async {
-    _punchName = name;
-    _idealIntervalDays = interval;
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('punchName', name);
-    await prefs.setInt('idealIntervalDays', interval);
-    
-    _addLog("设置更新", "名称: $name, 间隔: $interval 天");
-    notifyListeners();
+  Future<void> retryLoad() {
+    if (_isLoading) return ready;
+    return ready = _loadData();
   }
 
-  // --- Punch Logic ---
+  Future<void> updateSettings(String name, int interval) => _change((data) {
+        final trimmed = name.trim();
+        if (trimmed.isEmpty || trimmed.runes.length > 30) {
+          throw ArgumentError('名称需要 1–30 个字符');
+        }
+        if (interval < 1 || interval > 365) {
+          throw ArgumentError('间隔需要为 1–365 天');
+        }
+        if (trimmed == data.punchName && interval == data.idealIntervalDays) {
+          return data;
+        }
+        return data.copyWith(
+          punchName: trimmed,
+          idealIntervalDays: interval,
+          logs: [
+            _log('设置更新', '名称：$trimmed · 理想间隔：$interval 天'),
+            ...data.logs,
+          ],
+        );
+      });
+
+  bool isFutureDate(DateTime date) => calendarDate(date).isAfter(today);
 
   int getCountForDate(DateTime date) {
-    final record = _records.firstWhere(
-      (r) => isSameDay(r.date, date),
-      orElse: () => PunchRecord(date: date, count: 0),
-    );
-    return record.count;
-  }
-
-  Future<void> updatePunch(DateTime date, int change) async {
-    final index = _records.indexWhere((r) => isSameDay(r.date, date));
-    int newCount;
-    
-    if (index != -1) {
-      newCount = _records[index].count + change;
-      if (newCount < 0) newCount = 0; // Prevent negative
-      
-      if (newCount == 0) {
-        _records.removeAt(index);
-      } else {
-        _records[index] = PunchRecord(date: date, count: newCount);
-      }
-    } else {
-      newCount = change > 0 ? change : 0;
-      if (newCount > 0) {
-        _records.add(PunchRecord(date: date, count: newCount));
-      }
+    for (final record in records) {
+      if (sameCalendarDay(record.date, date)) return record.count;
     }
-
-    await _storageService.saveRecords(_records);
-    
-    String action = change > 0 ? "打卡 +$change" : "打卡 $change";
-    _addLog(action, "日期: ${date.toString().split(' ')[0]}, 新数量: $newCount");
-    
-    notifyListeners();
+    return 0;
   }
 
-  // --- Log Logic ---
+  Future<void> updatePunch(DateTime date, int change) => _change((data) {
+        final day = calendarDate(date);
+        if (isFutureDate(day)) throw ArgumentError('不能提前打卡未来的日期');
+        final oldCount = getCountForDate(day);
+        final newCount = (oldCount + change).clamp(0, 2147483647).toInt();
+        if (oldCount == newCount) return data;
+        final updated = data.records
+            .where((record) => !sameCalendarDay(record.date, day))
+            .toList();
+        if (newCount > 0) {
+          updated.add(PunchRecord(date: day, count: newCount));
+        }
+        final delta = newCount - oldCount;
+        return data.copyWith(
+          records: updated,
+          logs: [
+            _log(
+              delta > 0 ? '打卡 +$delta' : '打卡 $delta',
+              '${dateLabel(day)} · 当前 $newCount 次',
+            ),
+            ...data.logs,
+          ],
+        );
+      });
 
-  void _addLog(String action, String details) {
-    final log = PunchLog(
-      id: _uuid.v4(),
-      timestamp: DateTime.now(),
-      action: action,
-      details: details,
-    );
-    _logs.insert(0, log); // Add to top
-    _storageService.saveLogs(_logs);
+  Future<void> softDeleteLog(String id) => _setLogHidden(id, true);
+  Future<void> restoreLog(String id) => _setLogHidden(id, false);
+
+  Future<String> exportBackup() async {
+    await ready;
+    await _writeQueue;
+    if (_loadError != null) throw StateError(_loadError!);
+    return PunchBackup(data: _data, exportedAt: _clock()).encode();
   }
 
-  Future<void> softDeleteLog(String id) async {
-    final index = _logs.indexWhere((l) => l.id == id);
-    if (index != -1) {
-      _logs[index].isDeleted = true;
-      // We don't save the 'isDeleted' state to file to keep history intact in file, 
-      // but requirement says "store in file but delete from surface".
-      // So we actually need to save the isDeleted state to file so it persists across restarts.
-      await _storageService.saveLogs(_logs);
-      notifyListeners();
+  Future<void> importBackup(PunchBackup backup, {required bool replace}) =>
+      _change((data) {
+        if (backup.data.records.any((record) => isFutureDate(record.date))) {
+          throw const FormatException('备份中包含未来日期，请检查两台设备的时间');
+        }
+        PunchData imported;
+        if (replace) {
+          imported = backup.data;
+        } else {
+          // Taking the maximum makes repeated imports idempotent. Adding counts
+          // would duplicate the same activity each time devices exchange files.
+          final counts = {for (final record in data.records) record.date: record.count};
+          for (final record in backup.data.records) {
+            final current = counts[record.date] ?? 0;
+            if (record.count > current) counts[record.date] = record.count;
+          }
+          final logs = {for (final log in backup.data.logs) log.id: log};
+          for (final log in data.logs) {
+            logs[log.id] = log;
+          }
+          final sortedLogs = logs.values.toList()
+            ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          imported = data.copyWith(
+            records: counts.entries
+                .map((entry) => PunchRecord(date: entry.key, count: entry.value))
+                .toList(),
+            logs: sortedLogs,
+          );
+        }
+        return imported.copyWith(logs: [
+          _log('数据导入', '${replace ? '覆盖' : '合并'}备份 · ${backup.data.records.length} 个打卡日'),
+          ...imported.logs,
+        ]);
+      });
+
+  Future<void> _setLogHidden(String id, bool hidden) => _change((data) {
+        if (!data.logs.any((log) => log.id == id && log.isDeleted != hidden)) {
+          return data;
+        }
+        return data.copyWith(
+          logs: data.logs
+              .map((log) => log.id == id ? log.copyWith(isDeleted: hidden) : log)
+              .toList(),
+        );
+      });
+
+  int monthTotal(DateTime month) => records
+      .where((record) =>
+          record.date.year == month.year && record.date.month == month.month)
+      .fold(0, (sum, record) => sum + record.count);
+
+  int monthActiveDays(DateTime month) => records
+      .where((record) =>
+          record.date.year == month.year && record.date.month == month.month)
+      .length;
+
+  int get currentStreak {
+    var day = today;
+    if (getCountForDate(day) == 0) {
+      day = DateTime(day.year, day.month, day.day - 1);
     }
+    var streak = 0;
+    while (getCountForDate(day) > 0) {
+      streak++;
+      day = DateTime(day.year, day.month, day.day - 1);
+    }
+    return streak;
   }
 
-  // --- Helpers ---
-  
   DateTime? getLastPunchDate() {
-    if (_records.isEmpty) return null;
-    // Sort records by date descending
-    final sorted = List<PunchRecord>.from(_records)
-      ..sort((a, b) => b.date.compareTo(a.date));
-    return sorted.first.date;
+    final pastRecords = records.where((record) => !isFutureDate(record.date));
+    if (pastRecords.isEmpty) return null;
+    return pastRecords.last.date;
   }
 
   DateTime? getNextIdealDate() {
     final last = getLastPunchDate();
     if (last == null) return null;
-    return last.add(Duration(days: _idealIntervalDays));
+    return DateTime(last.year, last.month, last.day + idealIntervalDays);
   }
 
-  bool isSameDay(DateTime? a, DateTime? b) {
-    if (a == null || b == null) return false;
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+  PunchLog _log(String action, String details) => PunchLog(
+        id: _uuid.v4(),
+        timestamp: _clock(),
+        action: action,
+        details: details,
+      );
+
+  Future<void> _change(PunchData Function(PunchData) transform) {
+    // Serialize writes and publish a state only after it reaches disk.
+    final operation = _writeQueue.then((_) async {
+      await ready;
+      if (_loadError != null) throw StateError(_loadError!);
+      final next = transform(_data);
+      if (identical(next, _data)) return;
+      _isSaving = true;
+      _notify();
+      try {
+        await _storage.save(next);
+        _data = next;
+      } finally {
+        _isSaving = false;
+        _notify();
+      }
+    });
+    _writeQueue = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return operation;
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }

@@ -1,22 +1,23 @@
+import '../utils/calendar_date.dart';
+
 class PunchRecord {
   final DateTime date;
   final int count;
 
-  PunchRecord({required this.date, required this.count});
-
-  // Convert to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'date': date.toIso8601String(),
-      'count': count,
-    };
+  PunchRecord({required DateTime date, required this.count})
+      : date = calendarDate(date) {
+    if (count < 0 || count > 2147483647) {
+      throw const FormatException('打卡次数超出有效范围');
+    }
   }
 
-  // Create from JSON
-  factory PunchRecord.fromJson(Map<String, dynamic> json) {
-    return PunchRecord(
-      date: DateTime.parse(json['date']),
-      count: json['count'] as int,
-    );
-  }
+  Map<String, dynamic> toJson() => {
+        'date': dateLabel(date),
+        'count': count,
+      };
+
+  factory PunchRecord.fromJson(Map<String, dynamic> json) => PunchRecord(
+        date: DateTime.parse(json['date'] as String),
+        count: json['count'] as int,
+      );
 }

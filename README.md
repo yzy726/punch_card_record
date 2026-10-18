@@ -1,71 +1,57 @@
-# 打卡记录应用 (Punch Card Record)
+# 打卡记
 
-一个简单的Flutter应用，用于记录每日打卡情况。
+一个本地保存数据的 Flutter Android 打卡日历。支持每日多次打卡、补记、月度统计、连续天数、理想间隔，以及跨设备文件备份。
 
-## 功能特性
+## 使用
 
-- 📅 日历视图显示打卡记录
-- ✅ 标记每日打卡状态
-- 📊 查看月度统计
-- 💾 本地数据存储
-- 📱 响应式设计，支持移动设备
+- 点击首页「今日打卡」快速记录，也可点击日历日期增加或减少次数。
+- 点击右上角设置修改名称和理想间隔（1–365 天）。未来日期不能提前打卡。
+- 日志可以隐藏并立即撤销，隐藏日志不改变打卡次数。
+- 首页、日历和日志均支持中文及小屏滚动。
 
-## 技术栈
+## 在不同设备间同步
 
-- **Flutter** - 跨平台UI框架
-- **Dart** - 编程语言
-- **Provider** - 状态管理
-- **Shared Preferences** - 本地存储
-- **Table Calendar** - 日历组件
+1. 点击右上角双向箭头，进入「导出与导入」。
+2. 在设备 A 点击「导出数据」保存 JSON，或点击「分享备份到其他设备」。
+3. 把文件传到设备 B，在相同页面点击「导入数据」，检查预览后确认。
+4. **合并**保留两边的日期，同一天取较大的次数；日志按编号去重，本机设置优先。反复导入不会使相同打卡次数翻倍。
+5. **覆盖**完整恢复备份中的打卡、设置和日志；适合同步减少次数、删除记录和设置变更。覆盖前会再次确认，建议先导出当前数据。
 
-## 项目结构
+这是通过文件手动同步。备份包含全部日志（含隐藏项），请妥善保管。不需要账号或服务器，也不会自动上传个人数据。
 
-```
-lib/
-├── main.dart          # 应用入口
-├── models/            # 数据模型
-│   ├── punch_record.dart
-│   └── punch_log.dart
-├── providers/         # 状态管理
-│   └── punch_provider.dart
-├── screens/           # 界面页面
-│   ├── home_page.dart
-│   └── log_page.dart
-└── services/          # 服务层
-    └── storage_service.dart
-```
+## 下载 APK（无需本地开发环境）
 
-## 构建APK
+进入 [GitHub Actions](https://github.com/yzy726/punch_card_record/actions/workflows/build_apk.yml)，选择最近一次绿色成功的运行，在底部 **Artifacts → punch-card-record-apk** 下载并解压，安装其中的 APK。压缩包同时包含 SHA256 校验值。Artifacts 需要登录 GitHub，保留 90 天。
 
-### 使用GitHub Actions（推荐）
+主分支推送、Pull Request 和手动 Run workflow 都会触发构建。流程先进行静态分析、回归测试、UTC+8 与夏令时时区测试，再生成 APK。界面预览和覆盖率位于 validation artifact。
 
-1. 将项目推送到GitHub仓库
-2. GitHub Actions会自动构建APK
-3. 在Actions标签页下载生成的APK
+## 数据兼容与可靠性
 
-### 本地构建
+- 保持原 applicationId `com.example.punch_card_record`，自动读取旧版 JSON 文件和设置。
+- 只按日历上的年月日判断日期，解决北京时间凌晨 0–8 点把今天判成未来的问题。
+- 记录、日志和设置一起写入临时文件，完成后替换主文件；另保留上一次成功快照。快速操作串行保存，失败不会提前显示成功。
+- 数据损坏时尝试恢复备份；无法恢复则保留文件并提示重试，不会悄悄用空数据覆盖。
+- 应用在午夜和从后台恢复时刷新日期。
+
+## 构建与签名
+
+固定使用 Flutter 3.32.8、Java 17、AGP 8.7.3、Gradle 8.12、Kotlin 2.1.0。Android 6.0 及以上可安装。
+
+主分支使用 GitHub Actions Secrets 中的固定签名：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。密钥不提交到代码仓库。Pull Request 使用测试签名。以后在同一仓库构建的正式 APK 可保持签名一致。配置密钥时使用的本机 `.local-signing/` 目录已被 Git 忽略；请保留离线备份，不要提交私钥。
+
+**旧版安装提示：**原流程每次生成临时调试签名，旧 APK 可能无法直接覆盖安装。遇到签名冲突时不要直接卸载有数据的旧应用；卸载会删除本机数据。导出与导入可用于新版本之间的迁移，不能从尚未支持导出的旧应用中直接读取数据。
+
+如已有 Flutter 环境，可运行：
 
 ```bash
-# 安装依赖
 flutter pub get
-
-# 构建APK
+flutter analyze --fatal-infos
+flutter test
 flutter build apk --release
-
-# 构建完成后，APK文件位于：
-# build/app/outputs/flutter-apk/app-release.apk
 ```
 
-## 安装与运行
+本地没有配置签名时使用调试签名，仅用于测试，不应替换已有正式签名。
 
-1. 下载APK文件到Android设备
-2. 允许安装来自未知来源的应用（设置 > 安全 > 未知来源）
-3. 安装并运行应用
+## 回归验证
 
-## 开发环境设置
-
-请参考 [FLUTTER_INSTALLATION.md](FLUTTER_INSTALLATION.md) 设置Flutter开发环境。
-
-## 许可证
-
-MIT License
+测试覆盖 UTC 日历日期、凌晨打卡、未来日期限制、DST、跨年间隔、并发保存、写入失败回滚、旧数据迁移、损坏恢复、导入导出去重与覆盖，以及主要页面交互。

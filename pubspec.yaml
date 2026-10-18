@@ -1,34 +1,36 @@
 name: punch_card_record
-description: A new Flutter project for tracking daily punches.
+description: A private, local-first daily check-in calendar with portable backups.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   
   # Calendar widget
-  table_calendar: ^3.0.9
+  table_calendar: 3.2.0
   # Date formatting
-  intl: ^0.18.1
+  intl: 0.20.2
   # State management
-  provider: ^6.0.5
+  provider: 6.1.5
   # Local storage for settings
-  shared_preferences: ^2.2.0
+  shared_preferences: 2.5.3
   # File system access for logs
-  path_provider: ^2.1.1
-  # JSON support
-  json_annotation: ^4.8.1
+  path_provider: 2.1.5
+  file_picker: 10.3.3
+  share_plus: 11.0.0
   # UUID generation
-  uuid: ^4.0.0
+  uuid: 4.5.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: 5.0.0
 
 flutter:
   uses-material-design: true

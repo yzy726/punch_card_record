@@ -40,6 +40,10 @@
 **/android/key.properties
 **/android/.idea/
 *.jks
+*.keystore
+.local-signing/
+dist/
+.ci-output/
 
 # iOS related
 **/ios/**/*.mode1v3

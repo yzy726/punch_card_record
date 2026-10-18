@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="punch_card_record"
+        android:label="打卡记"
+        android:icon="@mipmap/ic_launcher"
         android:name="${applicationName}"
         >
         <activity

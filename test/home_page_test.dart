@@ -225,10 +225,34 @@ void main() {
     },
   );
 
+  testWidgets('create, configure and switch between independent habits', (tester) async {
+    final provider = await home(tester);
+    await tester.tap(find.byKey(const Key('todayPunchButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('createHabitButton')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('punchNameField')), '阅读');
+    await tester.enterText(find.byKey(const Key('intervalField')), '3');
+    await tester.tap(find.text('创建'));
+    await tester.pumpAndSettle();
+    expect(provider.habits.length, 2);
+    expect(provider.punchName, '阅读');
+    expect(provider.idealIntervalDays, 3);
+    expect(provider.getCountForDate(now), 0);
+    await tester.tap(find.byKey(const Key('todayPunchButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('habit-legacy')));
+    await tester.pumpAndSettle();
+    expect(provider.punchName, '每日打卡');
+    expect(provider.getCountForDate(now), 1);
+    expect(provider.idealIntervalDays, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('render home, transfer and log previews', (tester) async {
     final storage = MemoryStorage(
       PunchData(
-        punchName: '每天，进步一点点',
+      punchName: '每日阅读',
         records: [
           for (final day in [2, 4, 6, 9, 12, 13, 14, 15, 16, 17, 18])
             PunchRecord(
@@ -243,6 +267,9 @@ void main() {
       size: const Size(390, 1100),
       storage: storage,
     );
+    await provider.createHabit('运动', 3);
+    await provider.createHabit('喝水', 1);
+    await provider.selectHabit('legacy');
     await provider.updatePunch(now, 1);
     await tester.pumpAndSettle();
     await snapshot(tester, 'home');

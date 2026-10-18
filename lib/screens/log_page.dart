@@ -58,7 +58,7 @@ class _LogPageState extends State<LogPage> {
     final provider = context.watch<PunchProvider>();
     final logs = provider.logs.where((log) => !log.isDeleted).toList();
     return Scaffold(
-      appBar: AppBar(title: const Text('打卡日志')),
+      appBar: AppBar(title: Text('${provider.punchName} · 日志', maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

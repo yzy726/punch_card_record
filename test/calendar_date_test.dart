@@ -11,8 +11,14 @@ void main() {
 
   test('calendar day differences survive daylight saving transitions', () {
     expect(calendarDaysBetween(DateTime(2026, 3, 8), DateTime(2026, 3, 9)), 1);
-    expect(calendarDaysBetween(DateTime(2026, 11, 1), DateTime(2026, 11, 2)), 1);
-    expect(calendarDaysBetween(DateTime(2026, 12, 31), DateTime(2027, 1, 1)), 1);
+    expect(
+      calendarDaysBetween(DateTime(2026, 11, 1), DateTime(2026, 11, 2)),
+      1,
+    );
+    expect(
+      calendarDaysBetween(DateTime(2026, 12, 31), DateTime(2027, 1, 1)),
+      1,
+    );
   });
 
   test('old UTC records migrate to a date-only representation', () {

@@ -48,20 +48,35 @@ void main() {
 
   final now = DateTime(2026, 10, 18, 0, 5);
 
-  Future<PunchProvider> home(WidgetTester tester, {Size size = const Size(390, 844), MemoryStorage? storage, DateTime Function()? clock}) async {
+  Future<PunchProvider> home(
+    WidgetTester tester, {
+    Size size = const Size(390, 844),
+    MemoryStorage? storage,
+    DateTime Function()? clock,
+  }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final provider = PunchProvider(storageService: storage ?? MemoryStorage(), clock: clock ?? () => now);
+    final provider = PunchProvider(
+      storageService: storage ?? MemoryStorage(),
+      clock: clock ?? () => now,
+    );
     await provider.ready;
-    await tester.pumpWidget(RepaintBoundary(key: const Key('preview'), child: MyApp(provider: provider)));
+    await tester.pumpWidget(
+      RepaintBoundary(
+        key: const Key('preview'),
+        child: MyApp(provider: provider),
+      ),
+    );
     await tester.pumpAndSettle();
     return provider;
   }
 
   Future<void> snapshot(WidgetTester tester, String name) async {
-    final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(const Key('preview')));
+    final boundary = tester.renderObject<RenderRepaintBoundary>(
+      find.byKey(const Key('preview')),
+    );
     await tester.runAsync(() async {
       final image = await boundary.toImage(pixelRatio: 2);
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -72,7 +87,9 @@ void main() {
     });
   }
 
-  testWidgets('today calendar cell opens and can be punched before 08:00', (tester) async {
+  testWidgets('today calendar cell opens and can be punched before 08:00', (
+    tester,
+  ) async {
     final provider = await home(tester);
     final semantics = tester.ensureSemantics();
     final day = find.byKey(const ValueKey('calendar-2026-10-18'));
@@ -80,7 +97,9 @@ void main() {
     await tester.tap(day);
     await tester.pumpAndSettle();
     expect(find.byType(PunchSheet), findsOneWidget);
-    final decrement = tester.widget<OutlinedButton>(find.byKey(const Key('decrementPunch')));
+    final decrement = tester.widget<OutlinedButton>(
+      find.byKey(const Key('decrementPunch')),
+    );
     expect(decrement.onPressed, isNull);
     await tester.tap(find.byKey(const Key('incrementPunch')));
     await tester.pumpAndSettle();
@@ -89,7 +108,9 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('future calendar cells explain why they cannot be punched', (tester) async {
+  testWidgets('future calendar cells explain why they cannot be punched', (
+    tester,
+  ) async {
     final provider = await home(tester);
     final semantics = tester.ensureSemantics();
     final day = find.byKey(const ValueKey('calendar-2026-10-19'));
@@ -136,16 +157,23 @@ void main() {
 
   testWidgets('small screens scroll without overflows', (tester) async {
     await home(tester, size: const Size(320, 568));
-    await tester.drag(find.byKey(const Key('homeScroll')), const Offset(0, -700));
+    await tester.drag(
+      find.byKey(const Key('homeScroll')),
+      const Offset(0, -700),
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('数据保存在本机 · 每一次记录都算数'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('resuming after midnight refreshes today without restarting', (tester) async {
+  testWidgets('resuming after midnight refreshes today without restarting', (
+    tester,
+  ) async {
     var clock = DateTime(2026, 10, 18, 23, 59);
-    final storage = MemoryStorage(PunchData(records: [PunchRecord(date: clock, count: 1)]));
+    final storage = MemoryStorage(
+      PunchData(records: [PunchRecord(date: clock, count: 1)]),
+    );
     final provider = await home(tester, storage: storage, clock: () => clock);
     expect(find.text('再打卡一次'), findsOneWidget);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -157,41 +185,64 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('backup export, preview cancellation and merge use real provider data', (tester) async {
-    final provider = PunchProvider(storageService: MemoryStorage(), clock: () => now);
-    await provider.ready;
-    addTearDown(provider.dispose);
-    await provider.updatePunch(now, 2);
-    final files = TestBackupFiles()
-      ..selected = PunchBackup(exportedAt: now, data: PunchData(records: [PunchRecord(date: now, count: 5)]));
-    await tester.pumpWidget(ChangeNotifierProvider.value(
-      value: provider,
-      child: MaterialApp(home: BackupPage(files: files)),
-    ));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('exportDataButton')));
-    await tester.pumpAndSettle();
-    expect(PunchBackup.decode(files.exported!).data.records.single.count, 2);
-    await tester.tap(find.byKey(const Key('importDataButton')));
-    await tester.pumpAndSettle();
-    expect(find.text('预览导入数据'), findsOneWidget);
-    await tester.tap(find.text('取消'));
-    await tester.pumpAndSettle();
-    expect(provider.getCountForDate(now), 2);
-    await tester.tap(find.byKey(const Key('importDataButton')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('确认导入'));
-    await tester.pumpAndSettle();
-    expect(provider.getCountForDate(now), 5);
-    await tester.pumpWidget(const SizedBox());
-  });
+  testWidgets(
+    'backup export, preview cancellation and merge use real provider data',
+    (tester) async {
+      final provider = PunchProvider(
+        storageService: MemoryStorage(),
+        clock: () => now,
+      );
+      await provider.ready;
+      addTearDown(provider.dispose);
+      await provider.updatePunch(now, 2);
+      final files = TestBackupFiles()
+        ..selected = PunchBackup(
+          exportedAt: now,
+          data: PunchData(records: [PunchRecord(date: now, count: 5)]),
+        );
+      await tester.pumpWidget(
+        ChangeNotifierProvider.value(
+          value: provider,
+          child: MaterialApp(home: BackupPage(files: files)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('exportDataButton')));
+      await tester.pumpAndSettle();
+      expect(PunchBackup.decode(files.exported!).data.records.single.count, 2);
+      await tester.tap(find.byKey(const Key('importDataButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('预览导入数据'), findsOneWidget);
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      expect(provider.getCountForDate(now), 2);
+      await tester.tap(find.byKey(const Key('importDataButton')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('确认导入'));
+      await tester.pumpAndSettle();
+      expect(provider.getCountForDate(now), 5);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets('render home, transfer and log previews', (tester) async {
-    final storage = MemoryStorage(PunchData(
-      punchName: '每天，进步一点点',
-      records: [for (final day in [2, 4, 6, 9, 12, 13, 14, 15, 16, 17, 18]) PunchRecord(date: DateTime(2026, 10, day), count: day == 18 ? 2 : 1)],
-    ));
-    final provider = await home(tester, size: const Size(390, 1100), storage: storage);
+    final storage = MemoryStorage(
+      PunchData(
+        punchName: '每天，进步一点点',
+        records: [
+          for (final day in [2, 4, 6, 9, 12, 13, 14, 15, 16, 17, 18])
+            PunchRecord(
+              date: DateTime(2026, 10, day),
+              count: day == 18 ? 2 : 1,
+            ),
+        ],
+      ),
+    );
+    final provider = await home(
+      tester,
+      size: const Size(390, 1100),
+      storage: storage,
+    );
     await provider.updatePunch(now, 1);
     await tester.pumpAndSettle();
     await snapshot(tester, 'home');

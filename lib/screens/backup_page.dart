@@ -20,13 +20,15 @@ class _BackupPageState extends State<BackupPage> {
   late final _files = widget.files ?? BackupFileService();
   bool _busy = false;
 
-  void _message(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  void _message(String text) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
   Future<void> _export({bool share = false}) async {
     setState(() => _busy = true);
     try {
       final contents = await context.read<PunchProvider>().exportBackup();
-      final filename = 'punch-card-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}.json';
+      final filename =
+          'punch-card-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}.json';
       if (share) {
         await _files.shareFile(contents, filename);
       } else {
@@ -58,15 +60,24 @@ class _BackupPageState extends State<BackupPage> {
             title: const Text('覆盖当前数据？'),
             content: const Text('当前打卡、设置和日志将替换为备份中的内容。建议先导出当前数据。'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('取消')),
-              FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('确认覆盖')),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('确认覆盖'),
+              ),
             ],
           ),
         );
         if (confirmed != true || !mounted) return;
       }
       setState(() => _busy = true);
-      await context.read<PunchProvider>().importBackup(backup, replace: replace);
+      await context.read<PunchProvider>().importBackup(
+        backup,
+        replace: replace,
+      );
       if (mounted) _message(replace ? '已用备份恢复数据' : '合并完成，重复导入不会累加同一天的次数');
     } on FormatException catch (error) {
       if (mounted) _message(error.message);
@@ -96,13 +107,29 @@ class _BackupPageState extends State<BackupPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.devices_rounded, color: AppColors.primary, size: 36),
+                        const Icon(
+                          Icons.devices_rounded,
+                          color: AppColors.primary,
+                          size: 36,
+                        ),
                         const SizedBox(height: 16),
-                        Text('把坚持，带到另一台设备', style: Theme.of(context).textTheme.titleLarge),
+                        Text(
+                          '把坚持，带到另一台设备',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                         const SizedBox(height: 12),
-                        const Text('在这台设备导出或分享 JSON 备份，\n再到另一台设备点击「导入数据」。', style: TextStyle(height: 1.7)),
+                        const Text(
+                          '在这台设备导出或分享 JSON 备份，\n再到另一台设备点击「导入数据」。',
+                          style: TextStyle(height: 1.7),
+                        ),
                         const SizedBox(height: 16),
-                        Text('本机共 ${provider.records.length} 个打卡日 · ${provider.logs.length} 条日志', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        Text(
+                          '本机共 ${provider.records.length} 个打卡日 · ${provider.logs.length} 条日志',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -118,7 +145,9 @@ class _BackupPageState extends State<BackupPage> {
                 OutlinedButton.icon(
                   key: const Key('shareDataButton'),
                   onPressed: _busy ? null : () => _export(share: true),
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(16)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
                   icon: const Icon(Icons.ios_share_rounded),
                   label: const Text('分享备份到其他设备'),
                 ),
@@ -126,7 +155,9 @@ class _BackupPageState extends State<BackupPage> {
                 OutlinedButton.icon(
                   key: const Key('importDataButton'),
                   onPressed: _busy ? null : _import,
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(16)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
                   icon: const Icon(Icons.file_upload_outlined),
                   label: const Text('导入数据'),
                 ),
@@ -135,13 +166,37 @@ class _BackupPageState extends State<BackupPage> {
                   const LinearProgressIndicator(),
                 ],
                 const SizedBox(height: 28),
-                const Text('关于合并', style: TextStyle(fontWeight: FontWeight.w700)),
+                const Text(
+                  '关于合并',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
-                const Text('合并会保留两边的打卡日期，同一天取较大的次数，日志按编号去重，并保留本机设置。适合在设备间反复传递备份。', style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.7)),
+                const Text(
+                  '合并会保留两边的打卡日期，同一天取较大的次数，日志按编号去重，并保留本机设置。适合在设备间反复传递备份。',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.muted,
+                    height: 1.7,
+                  ),
+                ),
                 const SizedBox(height: 12),
-                const Text('若需要同步减少次数、删除记录或设置变更，请用最新备份覆盖。此功能通过文件手动同步，不会自动上传数据。', style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.7)),
+                const Text(
+                  '若需要同步减少次数、删除记录或设置变更，请用最新备份覆盖。此功能通过文件手动同步，不会自动上传数据。',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.muted,
+                    height: 1.7,
+                  ),
+                ),
                 const SizedBox(height: 12),
-                const Text('备份包含全部打卡、设置和日志（含隐藏日志），请只分享给信任的设备。', style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.7)),
+                const Text(
+                  '备份包含全部打卡、设置和日志（含隐藏日志），请只分享给信任的设备。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.muted,
+                    height: 1.7,
+                  ),
+                ),
               ],
             ),
           ),
@@ -166,7 +221,10 @@ class _ImportPreviewState extends State<_ImportPreview> {
   @override
   Widget build(BuildContext context) {
     final backup = widget.backup;
-    final count = backup.data.records.fold<int>(0, (sum, record) => sum + record.count);
+    final count = backup.data.records.fold<int>(
+      0,
+      (sum, record) => sum + record.count,
+    );
     return AlertDialog(
       title: const Text('预览导入数据'),
       content: SingleChildScrollView(
@@ -174,11 +232,20 @@ class _ImportPreviewState extends State<_ImportPreview> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(backup.data.punchName, style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              backup.data.punchName,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 8),
-            Text('${backup.data.records.length} 个打卡日 · $count 次打卡\n${backup.data.logs.length} 条日志（含隐藏日志）', style: const TextStyle(height: 1.7)),
+            Text(
+              '${backup.data.records.length} 个打卡日 · $count 次打卡\n${backup.data.logs.length} 条日志（含隐藏日志）',
+              style: const TextStyle(height: 1.7),
+            ),
             const SizedBox(height: 8),
-            Text('导出于 ${DateFormat('yyyy-MM-dd HH:mm').format(backup.exportedAt)}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+            Text(
+              '导出于 ${DateFormat('yyyy-MM-dd HH:mm').format(backup.exportedAt)}',
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+            ),
             const SizedBox(height: 16),
             RadioListTile<bool>(
               contentPadding: EdgeInsets.zero,
@@ -200,8 +267,14 @@ class _ImportPreviewState extends State<_ImportPreview> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
-        FilledButton(onPressed: () => Navigator.pop(context, _replace), child: const Text('确认导入')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _replace),
+          child: const Text('确认导入'),
+        ),
       ],
     );
   }

@@ -37,7 +37,7 @@
 
 固定使用 Flutter 3.32.8、Java 17、AGP 8.7.3、Gradle 8.12、Kotlin 2.1.0。Android 6.0 及以上可安装。
 
-主分支使用 GitHub Actions Secrets 中的固定签名：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。密钥不提交到代码仓库。Pull Request 使用测试签名。以后在同一仓库构建的正式 APK 可保持签名一致。
+主分支使用 GitHub Actions Secrets 中的固定签名：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。密钥不提交到代码仓库。Pull Request 使用测试签名。以后在同一仓库构建的正式 APK 可保持签名一致。配置密钥时使用的本机 `.local-signing/` 目录已被 Git 忽略；请保留离线备份，不要提交私钥。
 
 **旧版安装提示：**原流程每次生成临时调试签名，旧 APK 可能无法直接覆盖安装。遇到签名冲突时不要直接卸载有数据的旧应用；卸载会删除本机数据。导出与导入可用于新版本之间的迁移，不能从尚未支持导出的旧应用中直接读取数据。
 

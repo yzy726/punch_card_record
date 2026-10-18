@@ -48,12 +48,12 @@ void main() {
 
   final now = DateTime(2026, 10, 18, 0, 5);
 
-  Future<PunchProvider> home(WidgetTester tester, {Size size = const Size(390, 844), MemoryStorage? storage}) async {
+  Future<PunchProvider> home(WidgetTester tester, {Size size = const Size(390, 844), MemoryStorage? storage, DateTime Function()? clock}) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final provider = PunchProvider(storageService: storage ?? MemoryStorage(), clock: () => now);
+    final provider = PunchProvider(storageService: storage ?? MemoryStorage(), clock: clock ?? () => now);
     await provider.ready;
     await tester.pumpWidget(RepaintBoundary(key: const Key('preview'), child: MyApp(provider: provider)));
     await tester.pumpAndSettle();
@@ -75,7 +75,7 @@ void main() {
   testWidgets('today calendar cell opens and can be punched before 08:00', (tester) async {
     final provider = await home(tester);
     final semantics = tester.ensureSemantics();
-    final day = find.bySemanticsLabel('10月18日，打卡0次');
+    final day = find.byKey(const ValueKey('calendar-2026-10-18'));
     await tester.ensureVisible(day);
     await tester.tap(day);
     await tester.pumpAndSettle();
@@ -92,7 +92,7 @@ void main() {
   testWidgets('future calendar cells explain why they cannot be punched', (tester) async {
     final provider = await home(tester);
     final semantics = tester.ensureSemantics();
-    final day = find.bySemanticsLabel('10月19日，打卡0次');
+    final day = find.byKey(const ValueKey('calendar-2026-10-19'));
     await tester.ensureVisible(day);
     await tester.tap(day);
     await tester.pumpAndSettle();
@@ -143,6 +143,20 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('resuming after midnight refreshes today without restarting', (tester) async {
+    var clock = DateTime(2026, 10, 18, 23, 59);
+    final storage = MemoryStorage(PunchData(records: [PunchRecord(date: clock, count: 1)]));
+    final provider = await home(tester, storage: storage, clock: () => clock);
+    expect(find.text('再打卡一次'), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    clock = DateTime(2026, 10, 19, 0, 1);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(provider.today, DateTime(2026, 10, 19));
+    expect(find.text('今日打卡'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('backup export, preview cancellation and merge use real provider data', (tester) async {
     final provider = PunchProvider(storageService: MemoryStorage(), clock: () => now);
     await provider.ready;
@@ -184,7 +198,7 @@ void main() {
     await tester.tap(find.byKey(const Key('backupButton')));
     await tester.pumpAndSettle();
     await snapshot(tester, 'backup');
-    await tester.pageBack();
+    await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('打卡日志'));
     await tester.pumpAndSettle();

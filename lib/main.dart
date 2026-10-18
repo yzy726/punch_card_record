@@ -20,15 +20,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
-        create: (_) => provider ?? PunchProvider(),
-        child: MaterialApp(
-          title: '打卡记',
-          debugShowCheckedModeBanner: false,
-          locale: const Locale('zh', 'CN'),
-          supportedLocales: const [Locale('zh', 'CN')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          theme: buildAppTheme(),
-          home: const HomePage(),
-        ),
-      );
+    create: (_) => provider ?? PunchProvider(),
+    child: MaterialApp(
+      title: '打卡记',
+      debugShowCheckedModeBanner: false,
+      locale: const Locale('zh', 'CN'),
+      supportedLocales: const [Locale('zh', 'CN')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      theme: buildAppTheme(),
+      home: const HomePage(),
+    ),
+  );
 }

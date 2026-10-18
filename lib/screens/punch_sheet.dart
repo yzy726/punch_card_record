@@ -51,7 +51,15 @@ class _PunchSheetState extends State<PunchSheet> {
             const SizedBox(height: 8),
             Text(DateFormat('yyyy年M月d日 EEEE', 'zh_CN').format(widget.date)),
             const SizedBox(height: 20),
-            Text('$count', style: const TextStyle(fontSize: 60, height: 1.15, fontWeight: FontWeight.w700, color: AppColors.primary)),
+            Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 60,
+                height: 1.15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
             const Text('次打卡', style: TextStyle(color: AppColors.muted)),
             const SizedBox(height: 24),
             Row(
@@ -62,7 +70,9 @@ class _PunchSheetState extends State<PunchSheet> {
                     onPressed: _saving || count == 0 ? null : () => _change(-1),
                     icon: const Icon(Icons.remove_rounded),
                     label: const Text('减少一次'),
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -78,7 +88,10 @@ class _PunchSheetState extends State<PunchSheet> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ],
             const SizedBox(height: 12),
             TextButton(

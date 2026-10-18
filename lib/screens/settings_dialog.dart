@@ -69,9 +69,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   maxLength: 30,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(labelText: '打卡名称'),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? '请输入打卡名称'
-                      : null,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return '请输入打卡名称';
+                    return value.trim().runes.length > 30 ? '名称不能超过 30 个字符' : null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(

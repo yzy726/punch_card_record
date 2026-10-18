@@ -25,10 +25,15 @@ class _LogPageState extends State<LogPage> {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(SnackBar(
-        content: const Text('日志已隐藏，打卡记录不受影响'),
-        action: SnackBarAction(label: '撤销', onPressed: () => _restore(log.id)),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('日志已隐藏，打卡记录不受影响'),
+          action: SnackBarAction(
+            label: '撤销',
+            onPressed: () => _restore(log.id),
+          ),
+        ),
+      );
     } on Object {
       if (mounted) _error();
     } finally {
@@ -44,9 +49,9 @@ class _LogPageState extends State<LogPage> {
     }
   }
 
-  void _error() => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('保存失败，请重试。')),
-      );
+  void _error() => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(const SnackBar(content: Text('保存失败，请重试。')));
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +70,25 @@ class _LogPageState extends State<LogPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.history_rounded, size: 56, color: AppColors.muted),
+                          Icon(
+                            Icons.history_rounded,
+                            size: 56,
+                            color: AppColors.muted,
+                          ),
                           SizedBox(height: 20),
-                          Text('还没有可见的日志', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
+                          Text(
+                            '还没有可见的日志',
+                            style: TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           SizedBox(height: 10),
-                          Text('完成一次打卡，故事就从这里开始。', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
+                          Text(
+                            '完成一次打卡，故事就从这里开始。',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.muted),
+                          ),
                         ],
                       ),
                     ),
@@ -81,11 +100,23 @@ class _LogPageState extends State<LogPage> {
                       if (index == 0) {
                         return const Padding(
                           padding: EdgeInsets.only(bottom: 20),
-                          child: Text('每一份坚持，都有迹可循。\n隐藏日志不会删除打卡次数。', style: TextStyle(color: AppColors.muted, height: 1.7, fontSize: 13)),
+                          child: Text(
+                            '每一份坚持，都有迹可循。\n隐藏日志不会删除打卡次数。',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              height: 1.7,
+                              fontSize: 13,
+                            ),
+                          ),
                         );
                       }
                       final log = logs[index - 1];
-                      final newDay = index == 1 || !sameCalendarDay(logs[index - 2].timestamp, log.timestamp);
+                      final newDay =
+                          index == 1 ||
+                          !sameCalendarDay(
+                            logs[index - 2].timestamp,
+                            log.timestamp,
+                          );
                       final setting = log.action == '设置更新';
                       final decrease = log.action.startsWith('打卡 -');
                       return Column(
@@ -93,39 +124,95 @@ class _LogPageState extends State<LogPage> {
                         children: [
                           if (newDay)
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 12, top: 4),
-                              child: Text(DateFormat('M月d日 EEEE', 'zh_CN').format(log.timestamp), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              padding: const EdgeInsets.only(
+                                bottom: 12,
+                                top: 4,
+                              ),
+                              child: Text(
+                                DateFormat(
+                                  'M月d日 EEEE',
+                                  'zh_CN',
+                                ).format(log.timestamp),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Card(
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 18, 4, 18),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  18,
+                                  4,
+                                  18,
+                                ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(color: AppColors.pale, borderRadius: BorderRadius.circular(14)),
-                                      child: Icon(setting ? Icons.tune_rounded : decrease ? Icons.remove_rounded : Icons.check_rounded, color: AppColors.primary, size: 20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.pale,
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: Icon(
+                                        setting
+                                            ? Icons.tune_rounded
+                                            : decrease
+                                            ? Icons.remove_rounded
+                                            : Icons.check_rounded,
+                                        color: AppColors.primary,
+                                        size: 20,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(log.action, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                          Text(
+                                            log.action,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                           const SizedBox(height: 5),
-                                          Text(log.details, style: const TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5)),
+                                          Text(
+                                            log.details,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.muted,
+                                              height: 1.5,
+                                            ),
+                                          ),
                                           const SizedBox(height: 7),
-                                          Text(DateFormat('HH:mm:ss').format(log.timestamp), style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+                                          Text(
+                                            DateFormat(
+                                              'HH:mm:ss',
+                                            ).format(log.timestamp),
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.muted,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                     IconButton(
                                       tooltip: '隐藏日志',
-                                      icon: const Icon(Icons.visibility_off_outlined, size: 19, color: AppColors.muted),
-                                      onPressed: _busy.contains(log.id) ? null : () => _hide(log),
+                                      icon: const Icon(
+                                        Icons.visibility_off_outlined,
+                                        size: 19,
+                                        color: AppColors.muted,
+                                      ),
+                                      onPressed: _busy.contains(log.id)
+                                          ? null
+                                          : () => _hide(log),
                                     ),
                                   ],
                                 ),

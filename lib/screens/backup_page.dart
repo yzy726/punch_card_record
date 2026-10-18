@@ -45,6 +45,7 @@ class _BackupPageState extends State<BackupPage> {
     try {
       final backup = await _files.pickBackup();
       if (backup == null || !mounted) return;
+      setState(() => _busy = false);
       final replace = await showDialog<bool>(
         context: context,
         builder: (_) => _ImportPreview(backup: backup),
@@ -64,6 +65,7 @@ class _BackupPageState extends State<BackupPage> {
         );
         if (confirmed != true || !mounted) return;
       }
+      setState(() => _busy = true);
       await context.read<PunchProvider>().importBackup(backup, replace: replace);
       if (mounted) _message(replace ? '已用备份恢复数据' : '合并完成，重复导入不会累加同一天的次数');
     } on FormatException catch (error) {

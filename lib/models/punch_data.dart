@@ -14,29 +14,28 @@ class PunchData {
     List<PunchLog> logs = const [],
     this.punchName = '每日打卡',
     this.idealIntervalDays = 1,
-  })  : records = List.unmodifiable(_mergeRecords(records)),
-        logs = List.unmodifiable(logs);
+  }) : records = List.unmodifiable(_mergeRecords(records)),
+       logs = List.unmodifiable(logs);
 
   PunchData copyWith({
     List<PunchRecord>? records,
     List<PunchLog>? logs,
     String? punchName,
     int? idealIntervalDays,
-  }) =>
-      PunchData(
-        records: records ?? this.records,
-        logs: logs ?? this.logs,
-        punchName: punchName ?? this.punchName,
-        idealIntervalDays: idealIntervalDays ?? this.idealIntervalDays,
-      );
+  }) => PunchData(
+    records: records ?? this.records,
+    logs: logs ?? this.logs,
+    punchName: punchName ?? this.punchName,
+    idealIntervalDays: idealIntervalDays ?? this.idealIntervalDays,
+  );
 
   Map<String, dynamic> toJson() => {
-        'version': 1,
-        'punchName': punchName,
-        'idealIntervalDays': idealIntervalDays,
-        'records': records.map((record) => record.toJson()).toList(),
-        'logs': logs.map((log) => log.toJson()).toList(),
-      };
+    'version': 1,
+    'punchName': punchName,
+    'idealIntervalDays': idealIntervalDays,
+    'records': records.map((record) => record.toJson()).toList(),
+    'logs': logs.map((log) => log.toJson()).toList(),
+  };
 
   factory PunchData.fromJson(Map<String, dynamic> json) {
     if (json['version'] != 1) {

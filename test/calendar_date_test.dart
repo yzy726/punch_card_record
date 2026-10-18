@@ -23,4 +23,15 @@ void main() {
     expect(record.date, DateTime(2026, 10, 18));
     expect(record.toJson(), {'date': '2026-10-18', 'count': 2});
   });
+
+  test('invalid backup dates cannot silently roll into another month', () {
+    expect(
+      () => PunchRecord.fromJson({'date': '2026-02-30', 'count': 1}),
+      throwsFormatException,
+    );
+    expect(
+      () => PunchRecord.fromJson({'date': '2026-10-18', 'count': -1}),
+      throwsFormatException,
+    );
+  });
 }

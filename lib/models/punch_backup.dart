@@ -10,11 +10,11 @@ class PunchBackup {
   final DateTime exportedAt;
 
   String encode() => const JsonEncoder.withIndent('  ').convert({
-        'format': 'punch-card-record-backup',
-        'version': 1,
-        'exportedAt': exportedAt.toUtc().toIso8601String(),
-        'data': data.toJson(),
-      });
+    'format': 'punch-card-record-backup',
+    'version': 1,
+    'exportedAt': exportedAt.toUtc().toIso8601String(),
+    'data': data.toJson(),
+  });
 
   factory PunchBackup.decode(String contents) {
     if (utf8.encode(contents).length > maxBytes) {
@@ -22,7 +22,8 @@ class PunchBackup {
     }
     try {
       final json = jsonDecode(contents) as Map<String, dynamic>;
-      if (json['format'] != 'punch-card-record-backup' || json['version'] != 1) {
+      if (json['format'] != 'punch-card-record-backup' ||
+          json['version'] != 1) {
         throw const FormatException('请选择打卡记导出的有效 JSON 备份');
       }
       final data = PunchData.fromJson(json['data'] as Map<String, dynamic>);

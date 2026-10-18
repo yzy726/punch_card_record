@@ -45,9 +45,11 @@ class BackupFileService {
     final directory = await getTemporaryDirectory();
     final file = File('${directory.path}/$filename');
     await file.writeAsString(contents, flush: true);
-    await SharePlus.instance.share(ShareParams(
-      files: [XFile(file.path, mimeType: 'application/json')],
-      subject: '打卡记数据备份',
-    ));
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'application/json')],
+        subject: '打卡记数据备份',
+      ),
+    );
   }
 }

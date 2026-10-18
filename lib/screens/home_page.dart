@@ -325,13 +325,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                 ),
                 IconButton(
-                  tooltip: '上个月',
+                  tooltip: _format == CalendarFormat.month ? '上个月' : '上一周',
                   onPressed: () => _moveMonth(-1, first, last),
                   icon: const Icon(Icons.chevron_left_rounded),
                   visualDensity: VisualDensity.compact,
                 ),
                 IconButton(
-                  tooltip: '下个月',
+                  tooltip: _format == CalendarFormat.month ? '下个月' : '下一周',
                   onPressed: () => _moveMonth(1, first, last),
                   icon: const Icon(Icons.chevron_right_rounded),
                   visualDensity: VisualDensity.compact,
@@ -406,6 +406,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final future = provider.isFutureDate(day);
     final foreground = selected ? Colors.white : outside || future ? AppColors.muted : AppColors.ink;
     return Semantics(
+      key: ValueKey('calendar-${dateLabel(day)}'),
       button: true,
       label: '${day.month}月${day.day}日，打卡$count次',
       child: Container(

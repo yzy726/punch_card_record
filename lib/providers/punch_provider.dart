@@ -10,8 +10,8 @@ import '../utils/calendar_date.dart';
 
 class PunchProvider with ChangeNotifier {
   PunchProvider({StorageService? storageService, DateTime Function()? clock})
-      : _storage = storageService ?? StorageService(),
-        _clock = clock ?? DateTime.now {
+    : _storage = storageService ?? StorageService(),
+      _clock = clock ?? DateTime.now {
     ready = _loadData();
   }
 
@@ -56,25 +56,22 @@ class PunchProvider with ChangeNotifier {
   }
 
   Future<void> updateSettings(String name, int interval) => _change((data) {
-        final trimmed = name.trim();
-        if (trimmed.isEmpty || trimmed.runes.length > 30) {
-          throw ArgumentError('名称需要 1–30 个字符');
-        }
-        if (interval < 1 || interval > 365) {
-          throw ArgumentError('间隔需要为 1–365 天');
-        }
-        if (trimmed == data.punchName && interval == data.idealIntervalDays) {
-          return data;
-        }
-        return data.copyWith(
-          punchName: trimmed,
-          idealIntervalDays: interval,
-          logs: [
-            _log('设置更新', '名称：$trimmed · 理想间隔：$interval 天'),
-            ...data.logs,
-          ],
-        );
-      });
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || trimmed.runes.length > 30) {
+      throw ArgumentError('名称需要 1–30 个字符');
+    }
+    if (interval < 1 || interval > 365) {
+      throw ArgumentError('间隔需要为 1–365 天');
+    }
+    if (trimmed == data.punchName && interval == data.idealIntervalDays) {
+      return data;
+    }
+    return data.copyWith(
+      punchName: trimmed,
+      idealIntervalDays: interval,
+      logs: [_log('设置更新', '名称：$trimmed · 理想间隔：$interval 天'), ...data.logs],
+    );
+  });
 
   bool isFutureDate(DateTime date) => calendarDate(date).isAfter(today);
 
@@ -86,29 +83,29 @@ class PunchProvider with ChangeNotifier {
   }
 
   Future<void> updatePunch(DateTime date, int change) => _change((data) {
-        final day = calendarDate(date);
-        if (isFutureDate(day)) throw ArgumentError('不能提前打卡未来的日期');
-        final oldCount = getCountForDate(day);
-        final newCount = (oldCount + change).clamp(0, 2147483647).toInt();
-        if (oldCount == newCount) return data;
-        final updated = data.records
-            .where((record) => !sameCalendarDay(record.date, day))
-            .toList();
-        if (newCount > 0) {
-          updated.add(PunchRecord(date: day, count: newCount));
-        }
-        final delta = newCount - oldCount;
-        return data.copyWith(
-          records: updated,
-          logs: [
-            _log(
-              delta > 0 ? '打卡 +$delta' : '打卡 $delta',
-              '${dateLabel(day)} · 当前 $newCount 次',
-            ),
-            ...data.logs,
-          ],
-        );
-      });
+    final day = calendarDate(date);
+    if (isFutureDate(day)) throw ArgumentError('不能提前打卡未来的日期');
+    final oldCount = getCountForDate(day);
+    final newCount = (oldCount + change).clamp(0, 2147483647).toInt();
+    if (oldCount == newCount) return data;
+    final updated = data.records
+        .where((record) => !sameCalendarDay(record.date, day))
+        .toList();
+    if (newCount > 0) {
+      updated.add(PunchRecord(date: day, count: newCount));
+    }
+    final delta = newCount - oldCount;
+    return data.copyWith(
+      records: updated,
+      logs: [
+        _log(
+          delta > 0 ? '打卡 +$delta' : '打卡 $delta',
+          '${dateLabel(day)} · 当前 $newCount 次',
+        ),
+        ...data.logs,
+      ],
+    );
+  });
 
   Future<void> softDeleteLog(String id) => _setLogHidden(id, true);
   Future<void> restoreLog(String id) => _setLogHidden(id, false);
@@ -131,7 +128,9 @@ class PunchProvider with ChangeNotifier {
         } else {
           // Taking the maximum makes repeated imports idempotent. Adding counts
           // would duplicate the same activity each time devices exchange files.
-          final counts = {for (final record in data.records) record.date: record.count};
+          final counts = {
+            for (final record in data.records) record.date: record.count,
+          };
           for (final record in backup.data.records) {
             final current = counts[record.date] ?? 0;
             if (record.count > current) counts[record.date] = record.count;
@@ -144,36 +143,47 @@ class PunchProvider with ChangeNotifier {
             ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
           imported = data.copyWith(
             records: counts.entries
-                .map((entry) => PunchRecord(date: entry.key, count: entry.value))
+                .map(
+                  (entry) => PunchRecord(date: entry.key, count: entry.value),
+                )
                 .toList(),
             logs: sortedLogs,
           );
         }
-        return imported.copyWith(logs: [
-          _log('数据导入', '${replace ? '覆盖' : '合并'}备份 · ${backup.data.records.length} 个打卡日'),
-          ...imported.logs,
-        ]);
-      });
-
-  Future<void> _setLogHidden(String id, bool hidden) => _change((data) {
-        if (!data.logs.any((log) => log.id == id && log.isDeleted != hidden)) {
-          return data;
-        }
-        return data.copyWith(
-          logs: data.logs
-              .map((log) => log.id == id ? log.copyWith(isDeleted: hidden) : log)
-              .toList(),
+        return imported.copyWith(
+          logs: [
+            _log(
+              '数据导入',
+              '${replace ? '覆盖' : '合并'}备份 · ${backup.data.records.length} 个打卡日',
+            ),
+            ...imported.logs,
+          ],
         );
       });
 
+  Future<void> _setLogHidden(String id, bool hidden) => _change((data) {
+    if (!data.logs.any((log) => log.id == id && log.isDeleted != hidden)) {
+      return data;
+    }
+    return data.copyWith(
+      logs: data.logs
+          .map((log) => log.id == id ? log.copyWith(isDeleted: hidden) : log)
+          .toList(),
+    );
+  });
+
   int monthTotal(DateTime month) => records
-      .where((record) =>
-          record.date.year == month.year && record.date.month == month.month)
+      .where(
+        (record) =>
+            record.date.year == month.year && record.date.month == month.month,
+      )
       .fold(0, (sum, record) => sum + record.count);
 
   int monthActiveDays(DateTime month) => records
-      .where((record) =>
-          record.date.year == month.year && record.date.month == month.month)
+      .where(
+        (record) =>
+            record.date.year == month.year && record.date.month == month.month,
+      )
       .length;
 
   int get currentStreak {
@@ -202,11 +212,11 @@ class PunchProvider with ChangeNotifier {
   }
 
   PunchLog _log(String action, String details) => PunchLog(
-        id: _uuid.v4(),
-        timestamp: _clock(),
-        action: action,
-        details: details,
-      );
+    id: _uuid.v4(),
+    timestamp: _clock(),
+    action: action,
+    details: details,
+  );
 
   Future<void> _change(PunchData Function(PunchData) transform) {
     // Serialize writes and publish a state only after it reaches disk.

@@ -81,8 +81,8 @@ class StorageService {
   }
 
   Future<PunchData> _readSnapshot(File file) async => PunchData.fromJson(
-        jsonDecode(await file.readAsString()) as Map<String, dynamic>,
-      );
+    jsonDecode(await file.readAsString()) as Map<String, dynamic>,
+  );
 
   Future<List<T>> _readLegacy<T>(
     File file,

@@ -52,7 +52,10 @@ ThemeData buildAppTheme() {
       ),
     ),
     textTheme: const TextTheme(
-      headlineMedium: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+      headlineMedium: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: AppColors.ink,
+      ),
       titleLarge: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
       titleMedium: TextStyle(fontWeight: FontWeight.w600, color: AppColors.ink),
       bodyLarge: TextStyle(color: AppColors.ink),

@@ -61,9 +61,15 @@ class PunchProvider with ChangeNotifier {
   }
 
   void _validateSettings(String name, int interval, {PunchData? except}) {
-    if (name.isEmpty || name.runes.length > 30) throw ArgumentError('名称需要 1–30 个字符');
+    if (name.isEmpty || name.runes.length > 30) {
+      throw ArgumentError('名称需要 1–30 个字符');
+    }
     if (interval < 1 || interval > 365) throw ArgumentError('间隔需要为 1–365 天');
-    if (habits.any((habit) => !identical(habit.data, except) && habit.data.punchName.toLowerCase() == name.toLowerCase())) {
+    if (habits.any(
+      (habit) =>
+          !identical(habit.data, except) &&
+          habit.data.punchName.toLowerCase() == name.toLowerCase(),
+    )) {
       throw ArgumentError('已存在同名打卡，请换一个名称');
     }
   }
@@ -71,7 +77,9 @@ class PunchProvider with ChangeNotifier {
   Future<void> updateSettings(String name, int interval) => _change((data) {
     final trimmed = name.trim();
     _validateSettings(trimmed, interval, except: data);
-    if (trimmed == data.punchName && interval == data.idealIntervalDays) return data;
+    if (trimmed == data.punchName && interval == data.idealIntervalDays) {
+      return data;
+    }
     return data.copyWith(
       punchName: trimmed,
       idealIntervalDays: interval,
@@ -79,32 +87,47 @@ class PunchProvider with ChangeNotifier {
     );
   });
 
-  Future<void> createHabit(String name, int interval) => _changeWorkspace((workspace) {
-    final trimmed = name.trim();
-    _validateSettings(trimmed, interval);
-    final id = _uuid.v4();
-    return workspace.copyWith(
-      habits: [...workspace.habits, PunchHabit(id: id, data: PunchData(
-        punchName: trimmed,
-        idealIntervalDays: interval,
-        logs: [_log('创建打卡', '名称：$trimmed · 理想间隔：$interval 天')],
-      ))],
-      activeHabitId: id,
-    );
-  });
+  Future<void> createHabit(String name, int interval) =>
+      _changeWorkspace((workspace) {
+        final trimmed = name.trim();
+        _validateSettings(trimmed, interval);
+        final id = _uuid.v4();
+        return workspace.copyWith(
+          habits: [
+            ...workspace.habits,
+            PunchHabit(
+              id: id,
+              data: PunchData(
+                punchName: trimmed,
+                idealIntervalDays: interval,
+                logs: [_log('创建打卡', '名称：$trimmed · 理想间隔：$interval 天')],
+              ),
+            ),
+          ],
+          activeHabitId: id,
+        );
+      });
 
   Future<void> selectHabit(String id) => _changeWorkspace((workspace) {
-    if (!workspace.habits.any((habit) => habit.id == id)) throw ArgumentError('打卡项目不存在');
-    return workspace.activeHabitId == id ? workspace : workspace.copyWith(activeHabitId: id);
+    if (!workspace.habits.any((habit) => habit.id == id)) {
+      throw ArgumentError('打卡项目不存在');
+    }
+    return workspace.activeHabitId == id
+        ? workspace
+        : workspace.copyWith(activeHabitId: id);
   });
 
   Future<void> deleteHabit(String id) => _changeWorkspace((workspace) {
     if (!workspace.habits.any((habit) => habit.id == id)) return workspace;
     if (workspace.habits.length == 1) throw StateError('至少需要保留一个打卡项目');
-    final remaining = workspace.habits.where((habit) => habit.id != id).toList();
+    final remaining = workspace.habits
+        .where((habit) => habit.id != id)
+        .toList();
     return workspace.copyWith(
       habits: remaining,
-      activeHabitId: workspace.activeHabitId == id ? remaining.first.id : workspace.activeHabitId,
+      activeHabitId: workspace.activeHabitId == id
+          ? remaining.first.id
+          : workspace.activeHabitId,
     );
   });
 
@@ -120,7 +143,9 @@ class PunchProvider with ChangeNotifier {
   Future<void> updatePunch(DateTime date, int change) => _change((data) {
     final day = calendarDate(date);
     if (isFutureDate(day)) throw ArgumentError('不能提前打卡未来的日期');
-    final oldCount = data.records.where((record) => sameCalendarDay(record.date, day)).fold<int>(0, (sum, record) => sum + record.count);
+    final oldCount = data.records
+        .where((record) => sameCalendarDay(record.date, day))
+        .fold<int>(0, (sum, record) => sum + record.count);
     final newCount = (oldCount + change).clamp(0, 2147483647).toInt();
     if (oldCount == newCount) return data;
     final updated = data.records
@@ -152,38 +177,64 @@ class PunchProvider with ChangeNotifier {
     return PunchBackup(workspace: _workspace, exportedAt: _clock()).encode();
   }
 
-  Future<void> importBackup(PunchBackup backup, {required bool replace}) =>
-      _changeWorkspace((workspace) {
-        if (backup.workspace.habits.any((habit) => habit.data.records.any((record) => isFutureDate(record.date)))) {
-          throw const FormatException('备份中包含未来日期，请检查两台设备的时间');
-        }
-        PunchWorkspace imported;
-        if (replace) {
-          imported = backup.workspace;
-        } else {
-          final merged = {for (final habit in workspace.habits) habit.id: habit};
-          for (final habit in backup.workspace.habits) {
-            final local = merged[habit.id];
-            merged[habit.id] = local == null ? habit : PunchHabit(id: habit.id, data: _mergeData(local.data, habit.data));
-          }
-          imported = workspace.copyWith(habits: merged.values.toList());
-        }
-        return imported.withData(imported.activeHabitId, imported.active.data.copyWith(logs: [
-          _log('数据导入', '${replace ? '覆盖' : '合并'}备份 · ${backup.workspace.habits.length} 个打卡项目'),
+  Future<void> importBackup(
+    PunchBackup backup, {
+    required bool replace,
+  }) => _changeWorkspace((workspace) {
+    if (backup.workspace.habits.any(
+      (habit) => habit.data.records.any((record) => isFutureDate(record.date)),
+    )) {
+      throw const FormatException('备份中包含未来日期，请检查两台设备的时间');
+    }
+    PunchWorkspace imported;
+    if (replace) {
+      imported = backup.workspace;
+    } else {
+      final merged = {for (final habit in workspace.habits) habit.id: habit};
+      for (final habit in backup.workspace.habits) {
+        final local = merged[habit.id];
+        merged[habit.id] = local == null
+            ? habit
+            : PunchHabit(
+                id: habit.id,
+                data: _mergeData(local.data, habit.data),
+              );
+      }
+      imported = workspace.copyWith(habits: merged.values.toList());
+    }
+    return imported.withData(
+      imported.activeHabitId,
+      imported.active.data.copyWith(
+        logs: [
+          _log(
+            '数据导入',
+            '${replace ? '覆盖' : '合并'}备份 · ${backup.workspace.habits.length} 个打卡项目',
+          ),
           ...imported.active.data.logs,
-        ]));
-      });
+        ],
+      ),
+    );
+  });
 
   PunchData _mergeData(PunchData local, PunchData remote) {
-    final counts = {for (final record in local.records) record.date: record.count};
+    final counts = {
+      for (final record in local.records) record.date: record.count,
+    };
     for (final record in remote.records) {
-      if (record.count > (counts[record.date] ?? 0)) counts[record.date] = record.count;
+      if (record.count > (counts[record.date] ?? 0)) {
+        counts[record.date] = record.count;
+      }
     }
     final logs = {for (final log in remote.logs) log.id: log};
-    for (final log in local.logs) { logs[log.id] = log; }
-    final sorted = logs.values.toList()..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    for (final log in local.logs) {
+      logs[log.id] = log;
+    }
+    final sorted = logs.values.toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return local.copyWith(
-      records: counts.entries.map((entry) => PunchRecord(date: entry.key, count: entry.value)).toList(),
+      records: counts.entries
+          .map((entry) => PunchRecord(date: entry.key, count: entry.value))
+          .toList(),
       logs: sorted,
     );
   }
@@ -251,11 +302,15 @@ class PunchProvider with ChangeNotifier {
       final id = requestedId ?? workspace.activeHabitId;
       final habit = workspace.habits.firstWhere((habit) => habit.id == id);
       final next = transform(habit.data);
-      return identical(next, habit.data) ? workspace : workspace.withData(id, next);
+      return identical(next, habit.data)
+          ? workspace
+          : workspace.withData(id, next);
     });
   }
 
-  Future<void> _changeWorkspace(PunchWorkspace Function(PunchWorkspace) transform) {
+  Future<void> _changeWorkspace(
+    PunchWorkspace Function(PunchWorkspace) transform,
+  ) {
     // Serialize writes and publish a state only after it reaches disk.
     final operation = _writeQueue.then((_) async {
       await ready;

@@ -55,12 +55,14 @@ class StorageService {
     final preferences = await SharedPreferences.getInstance();
     final name = preferences.getString('punchName')?.trim() ?? '';
     final interval = preferences.getInt('idealIntervalDays') ?? 1;
-    return PunchWorkspace.single(PunchData(
-      records: records,
-      logs: logs,
-      punchName: name.isEmpty ? '每日打卡' : name,
-      idealIntervalDays: interval.clamp(1, 365).toInt(),
-    ));
+    return PunchWorkspace.single(
+      PunchData(
+        records: records,
+        logs: logs,
+        punchName: name.isEmpty ? '每日打卡' : name,
+        idealIntervalDays: interval.clamp(1, 365).toInt(),
+      ),
+    );
   }
 
   Future<void> save(PunchWorkspace data) async {
@@ -81,9 +83,10 @@ class StorageService {
     _primaryHealthy = true;
   }
 
-  Future<PunchWorkspace> _readSnapshot(File file) async => PunchWorkspace.fromJson(
-    jsonDecode(await file.readAsString()) as Map<String, dynamic>,
-  );
+  Future<PunchWorkspace> _readSnapshot(File file) async =>
+      PunchWorkspace.fromJson(
+        jsonDecode(await file.readAsString()) as Map<String, dynamic>,
+      );
 
   Future<List<T>> _readLegacy<T>(
     File file,

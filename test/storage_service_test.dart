@@ -21,9 +21,11 @@ void main() {
 
   tearDown(() async => directory.delete(recursive: true));
 
-  PunchWorkspace snapshot(int count) => PunchWorkspace.single(PunchData(
-    records: [PunchRecord(date: DateTime(2026, 10, 18), count: count)],
-  ));
+  PunchWorkspace snapshot(int count) => PunchWorkspace.single(
+    PunchData(
+      records: [PunchRecord(date: DateTime(2026, 10, 18), count: count)],
+    ),
+  );
 
   test(
     'migrates old files and preferences without deleting originals',
@@ -88,7 +90,10 @@ void main() {
                 ).readAsString(),
               )
               as Map<String, dynamic>;
-      expect(PunchWorkspace.fromJson(backup).active.data.records.single.count, 1);
+      expect(
+        PunchWorkspace.fromJson(backup).active.data.records.single.count,
+        1,
+      );
       expect(
         (await StorageService(
           directory: directory,

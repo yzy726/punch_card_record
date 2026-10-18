@@ -221,10 +221,9 @@ class _ImportPreviewState extends State<_ImportPreview> {
   @override
   Widget build(BuildContext context) {
     final backup = widget.backup;
-    final count = backup.workspace.habits.expand((habit) => habit.data.records).fold<int>(
-      0,
-      (sum, record) => sum + record.count,
-    );
+    final count = backup.workspace.habits
+        .expand((habit) => habit.data.records)
+        .fold<int>(0, (sum, record) => sum + record.count);
     return AlertDialog(
       title: const Text('预览导入数据'),
       content: SingleChildScrollView(
@@ -241,10 +240,15 @@ class _ImportPreviewState extends State<_ImportPreview> {
               '$count 次打卡 · ${backup.workspace.habits.fold<int>(0, (sum, habit) => sum + habit.data.logs.length)} 条日志（含隐藏日志）',
               style: const TextStyle(height: 1.7),
             ),
-            ...backup.workspace.habits.map((habit) => Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text('${habit.data.punchName} · 间隔 ${habit.data.idealIntervalDays} 天', style: const TextStyle(fontSize: 13)),
-            )),
+            ...backup.workspace.habits.map(
+              (habit) => Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '${habit.data.punchName} · 间隔 ${habit.data.idealIntervalDays} 天',
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               '导出于 ${DateFormat('yyyy-MM-dd HH:mm').format(backup.exportedAt)}',

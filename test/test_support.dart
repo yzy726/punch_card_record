@@ -3,7 +3,8 @@ import 'package:punch_card_record/models/punch_workspace.dart';
 import 'package:punch_card_record/services/storage_service.dart';
 
 class MemoryStorage extends StorageService {
-  MemoryStorage([PunchData? initial]) : workspace = PunchWorkspace.single(initial ?? PunchData());
+  MemoryStorage([PunchData? initial])
+    : workspace = PunchWorkspace.single(initial ?? PunchData());
   MemoryStorage.workspace(this.workspace);
 
   PunchWorkspace workspace;

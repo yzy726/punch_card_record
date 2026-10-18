@@ -225,7 +225,9 @@ void main() {
     },
   );
 
-  testWidgets('create, configure and switch between independent habits', (tester) async {
+  testWidgets('create, configure and switch between independent habits', (
+    tester,
+  ) async {
     final provider = await home(tester);
     await tester.tap(find.byKey(const Key('todayPunchButton')));
     await tester.pumpAndSettle();
@@ -252,7 +254,7 @@ void main() {
   testWidgets('render home, transfer and log previews', (tester) async {
     final storage = MemoryStorage(
       PunchData(
-      punchName: '每日阅读',
+        punchName: '每日阅读',
         records: [
           for (final day in [2, 4, 6, 9, 12, 13, 14, 15, 16, 17, 18])
             PunchRecord(

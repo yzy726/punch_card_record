@@ -4,8 +4,11 @@ import 'punch_data.dart';
 import 'punch_workspace.dart';
 
 class PunchBackup {
-  PunchBackup({PunchData? data, PunchWorkspace? workspace, required this.exportedAt})
-      : workspace = workspace ?? PunchWorkspace.single(data ?? PunchData());
+  PunchBackup({
+    PunchData? data,
+    PunchWorkspace? workspace,
+    required this.exportedAt,
+  }) : workspace = workspace ?? PunchWorkspace.single(data ?? PunchData());
 
   static const maxBytes = 10 * 1024 * 1024;
   final PunchWorkspace workspace;
@@ -30,10 +33,13 @@ class PunchBackup {
         throw const FormatException('请选择打卡记导出的有效 JSON 备份');
       }
       final workspace = json['version'] == 1
-          ? PunchWorkspace.single(PunchData.fromJson(json['data'] as Map<String, dynamic>))
+          ? PunchWorkspace.single(
+              PunchData.fromJson(json['data'] as Map<String, dynamic>),
+            )
           : PunchWorkspace.fromJson(json['workspace'] as Map<String, dynamic>);
       for (final habit in workspace.habits) {
-        if (habit.data.logs.map((log) => log.id).toSet().length != habit.data.logs.length) {
+        if (habit.data.logs.map((log) => log.id).toSet().length !=
+            habit.data.logs.length) {
           throw const FormatException('备份中存在重复的日志编号');
         }
       }

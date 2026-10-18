@@ -17,8 +17,10 @@ class PunchHabit {
 /// Each habit owns its settings, records and logs. Stable IDs allow backups
 /// from different devices to merge even after a habit has been renamed.
 class PunchWorkspace {
-  PunchWorkspace({required List<PunchHabit> habits, required this.activeHabitId})
-    : habits = List.unmodifiable(habits) {
+  PunchWorkspace({
+    required List<PunchHabit> habits,
+    required this.activeHabitId,
+  }) : habits = List.unmodifiable(habits) {
     if (habits.isEmpty ||
         habits.any((habit) => habit.id.isEmpty) ||
         habits.map((habit) => habit.id).toSet().length != habits.length ||
@@ -35,7 +37,8 @@ class PunchWorkspace {
   final List<PunchHabit> habits;
   final String activeHabitId;
 
-  PunchHabit get active => habits.firstWhere((habit) => habit.id == activeHabitId);
+  PunchHabit get active =>
+      habits.firstWhere((habit) => habit.id == activeHabitId);
 
   PunchWorkspace copyWith({List<PunchHabit>? habits, String? activeHabitId}) =>
       PunchWorkspace(
@@ -44,7 +47,9 @@ class PunchWorkspace {
       );
 
   PunchWorkspace withData(String id, PunchData data) => copyWith(
-    habits: habits.map((habit) => habit.id == id ? PunchHabit(id: id, data: data) : habit).toList(),
+    habits: habits
+        .map((habit) => habit.id == id ? PunchHabit(id: id, data: data) : habit)
+        .toList(),
   );
 
   Map<String, dynamic> toJson() => {

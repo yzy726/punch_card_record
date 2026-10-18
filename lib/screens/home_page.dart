@@ -205,9 +205,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ),
                         const SizedBox(height: 16),
                       ],
-                          _habitsBar(provider),
-                          const SizedBox(height: 12),
-                          _hero(provider),
+                      _habitsBar(provider),
+                      const SizedBox(height: 12),
+                      _hero(provider),
                       const SizedBox(height: 20),
                       _statistics(provider),
                       const SizedBox(height: 20),
@@ -252,38 +252,59 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       Expanded(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(children: provider.habits.map((habit) => Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Tooltip(
-              message: '${habit.data.punchName} · 每隔 ${habit.data.idealIntervalDays} 天',
-              child: ChoiceChip(
-                key: ValueKey('habit-${habit.id}'),
-                selected: habit.id == provider.activeHabitId,
-                label: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 150),
-                  child: Text(habit.data.punchName, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ),
-                onSelected: provider.isSaving ? null : (_) async {
-                  try {
-                    await provider.selectHabit(habit.id);
-                    if (mounted) setState(() { _selectedDay = provider.today; _focusedDay = provider.today; });
-                  } on Object {
-                    if (mounted) _message('切换失败，请重试。');
-                  }
-                },
-              ),
-            ),
-          )).toList()),
+          child: Row(
+            children: provider.habits
+                .map(
+                  (habit) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Tooltip(
+                      message:
+                          '${habit.data.punchName} · 每隔 ${habit.data.idealIntervalDays} 天',
+                      child: ChoiceChip(
+                        key: ValueKey('habit-${habit.id}'),
+                        selected: habit.id == provider.activeHabitId,
+                        label: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: Text(
+                            habit.data.punchName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        onSelected: provider.isSaving
+                            ? null
+                            : (_) async {
+                                try {
+                                  await provider.selectHabit(habit.id);
+                                  if (mounted) {
+                                    setState(() {
+                                      _selectedDay = provider.today;
+                                      _focusedDay = provider.today;
+                                    });
+                                  }
+                                } on Object {
+                                  if (mounted) _message('切换失败，请重试。');
+                                }
+                              },
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
       const SizedBox(width: 8),
       IconButton.filledTonal(
         key: const Key('createHabitButton'),
         tooltip: '新建打卡',
-        onPressed: provider.isSaving ? null : () => showDialog<void>(
-          context: context,
-          builder: (_) => SettingsDialog(provider: provider, create: true),
-        ),
+        onPressed: provider.isSaving
+            ? null
+            : () => showDialog<void>(
+                context: context,
+                builder: (_) =>
+                    SettingsDialog(provider: provider, create: true),
+              ),
         icon: const Icon(Icons.add_rounded),
       ),
     ],
